@@ -1,6 +1,6 @@
 # Anatomy of the position-0 "attention sink" in small open transformers
 
-**Date:** 2026-05-19 (v0.3 — register direction analysis added)
+**Date:** 2026-05-19 (v0.4 — register vs unembedding PCA added)
 
 ## Question
 
@@ -42,9 +42,14 @@ We answer all three with concrete numbers.
   same as a random Gaussian baseline). In GPT-2 small the register is
   anti-aligned with rare control-character tokens (cosine −0.29 vs
   baseline 0.15). In Pythia-1.4B it's strongly anti-aligned with
-  whitespace tokens (unembedding cosine −0.44 vs baseline 0.09). Could
-  be functional (learned suppression) or geometric (orthogonal to the
-  unembedding bulk); not distinguishable from this experiment alone.
+  whitespace tokens (unembedding cosine −0.44 vs baseline 0.09).
+- **The register direction lives in a null subspace of the unembedding.**
+  Top-100 principal components of the unembedding matrix capture only
+  9–25 % of the register's energy across the three models. The register
+  is not the "anti-bulk" direction — it's a direction that the lm_head
+  projects to approximately uniform logits, so high-norm activations
+  there don't disrupt token predictions. The v0.3 anti-alignments are
+  second-order properties, not the dominant feature.
 
 ## Methodology
 
@@ -146,6 +151,60 @@ The exact layer indices differ — GPT-2's main writer is L2 (out of 12),
 Pythia's is L3 (out of 24), Qwen's is L2/L3 (out of 24). Normalized by
 network depth, all are very early (positions 16–25% into the network).
 The eraser is consistently in the final 5–10% of layers.
+
+### v0.4 — geometric vs functional: is the register the anti-direction of the unembedding bulk?
+
+v0.3 raised the question of whether the anti-alignment with specific
+token classes (whitespace in Pythia, control characters in GPT-2) is
+*functional* (the model learned to suppress those tokens via the
+register) or *geometric* (the register's direction happens to be the
+anti-direction of the unembedding's "bulk", and those tokens are just
+the ones dominating that bulk).
+
+**Methodology** (`06_register_vs_unembed_pca.py`): compute the top
+principal components of the centered unembedding matrix; project the
+register direction onto each PC; measure how much of the register's norm
+is captured by the top-K PCs.
+
+If the register were the anti-direction of the unembedding's bulk, we'd
+expect ≥50 % of its norm to fall in the top-10 PCs of the unembedding.
+
+**Results:**
+
+| model              | cos(reg, unembed PC1) | top-10 PCs capture | top-100 PCs capture |
+|--------------------|----------------------|--------------------|---------------------|
+| **Qwen2.5-0.5B**   | −0.006 (negligible)  | **1.0 %**          | 24.9 %              |
+| **GPT-2 small**    | +0.29 (some overlap) | **10.1 %**         | 11.2 %              |
+| **Pythia-1.4B**    | +0.13 (small)        | **4.1 %**          | 8.5 %               |
+
+In all three models, the register direction is **largely orthogonal to
+the unembedding's principal variance directions.** Top-100 PCs explain
+only 9–25 % of the register's energy. The geometric hypothesis "register
+= anti-bulk direction" is refuted: PC1 explains only 1.8–3.2 % of the
+unembedding's variance, and the register has at most moderate cosine
+with it.
+
+**Most consistent interpretation across all three models:** the register
+lives in a **null subspace** of the unembedding — directions where the
+lm_head's output is approximately uniform across tokens. Writing
+high-norm in such a direction doesn't distort token predictions because
+no specific token has strong overlap with it. The v0.3 anti-alignment
+with whitespace (Pythia) and control chars (GPT-2) is a **second-order
+property** of specific tokens whose unembedding rows happen to land in
+directions overlapping with the register — not the dominant feature of
+the register's geometry.
+
+**Tentative aggregate claim**: the position-0 register's geometric role
+is to occupy a *null direction in unembedding space* — somewhere
+high-norm activations can sit without affecting next-token logits. This
+explains why the register direction can be arbitrary (Qwen's is nearly
+null, GPT-2's and Pythia's have residual anti-token alignments) — what
+matters is that the direction has low impact on the unembedding
+projection. The functional-vs-geometric framing of v0.3 was a false
+dichotomy: it's neither purely "the model learned to suppress whitespace"
+nor "the register is the anti-bulk direction." It's "the model picked a
+direction that doesn't matter for predictions, then learned to use that
+direction as its attention sink."
 
 ### v0.3 — what direction does the register point in?
 
