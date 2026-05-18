@@ -1,0 +1,15 @@
+{
+  "model": "EleutherAI/pythia-1.4b",
+  "layer": 12,
+  "n_sequences": 256,
+  "d_model": 2048,
+  "total_rms": 1283.4886474609375,
+  "constant_norm": 1283.234375,
+  "variable_rms": 55.58946228027344,
+  "constant_fraction_of_energy": 0.9981269095879202,
+  "pairwise_cos_mean": 0.9995937347412109,
+  "pairwise_cos_std": 0.0002976590767502785,
+  "pca_explained_top1": 0.8134165291969603,
+  "pca_explained_top10": 0.8756331331870942,
+  "pca_explained_top100": 0.9762169669384897
+}

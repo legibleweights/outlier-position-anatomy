@@ -1,0 +1,15 @@
+{
+  "model": "Qwen/Qwen2.5-0.5B",
+  "layer": 10,
+  "n_sequences": 512,
+  "d_model": 896,
+  "total_rms": 1682.1201171875,
+  "constant_norm": 1682.01025390625,
+  "variable_rms": 65.4676513671875,
+  "constant_fraction_of_energy": 0.9984873487502554,
+  "pairwise_cos_mean": 0.9998679757118225,
+  "pairwise_cos_std": 4.362086110631935e-05,
+  "pca_explained_top1": 0.9286414689003316,
+  "pca_explained_top10": 0.9693237003624701,
+  "pca_explained_top100": 0.9965757556083713
+}

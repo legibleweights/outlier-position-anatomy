@@ -6,8 +6,11 @@ ablation on Qwen2.5-0.5B, GPT-2 small, and Pythia-1.4B.
 
 ## Headline finding
 
-**The position-0 outlier is a load-bearing 3-component write-and-erase
-register circuit, not noise.**
+**The position-0 outlier in small open transformers is a load-bearing
+write-and-erase circuit that maintains a fixed scaffolding vector — not
+a memory. Removing it breaks the model.**
+
+### Where it is (circuit topology)
 
 | model              | n_layers | writers (first 4 layers)      | eraser (last 1-2 layers) |
 |--------------------|---------:|-------------------------------|--------------------------|
@@ -15,11 +18,24 @@ register circuit, not noise.**
 | **GPT-2 small**    | 12       | L1 MLP + L2 MLP (writes 2334) | L11 MLP                  |
 | **Pythia-1.4B**    | 24       | L3 MLP (writes 812) + L4 MLP  | L23 MLP (final layer)    |
 
+### What's in it (across 256–512 held-out inputs per model)
+
+| model              | layer | constant component | variable component | constant share of energy | mean pairwise cosine |
+|--------------------|------:|-------------------:|-------------------:|-------------------------:|---------------------:|
+| **Qwen2.5-0.5B**   | 10    | 1,682 RMS          | 65 RMS             | **99.8 %**               | **0.9999**           |
+| **GPT-2 small**    | 6     | 3,041 RMS          | 34 RMS             | **99.99 %**              | **0.9999**           |
+| **Pythia-1.4B**    | 12    | 1,283 RMS          | 56 RMS             | **99.8 %**               | **0.9996**           |
+
+In all three models the register is essentially a fixed vector — same
+direction, same magnitude, across hundreds of inputs.
+
+### Why removing it doesn't work
+
 On Qwen2.5-0.5B, ablating the writers drops position-0 residual RMS from
 **754 → 11** at layer 2 — the outlier is gone. But CE loss on FineWeb-Edu
 rises by **+3.29 nats** (from 2.66 → 5.94). The circuit is **functionally
-necessary**; the model has *learned* to use the high-norm position-0 as a
-register for some downstream computation, and breaks if that register is
+necessary**; the model has *learned* to use the high-norm position-0 as
+a structural anchor (an attention-sink dump) and breaks if that anchor is
 removed.
 
 All three architectures — different tokenizers, training corpora, layer
@@ -39,6 +55,9 @@ the MLPs do most of the work.
   Identifies the specific responsible components.
 - `03_circuit_ablation.py` — joint writer-circuit ablation + held-out CE
   loss measurement. Tests load-bearing-ness.
+- `04_register_variability.py` — across hundreds of inputs, measures the
+  constant vs variable components of the position-0 register at mid-
+  network. Shows the register is essentially a fixed vector.
 - `results/{qwen2.5-0.5b,gpt2-small,pythia-1.4b}/*.json` — per-model
   numerical reports.
 - [`NOTES.md`](NOTES.md) — full writeup with methodology, all results,

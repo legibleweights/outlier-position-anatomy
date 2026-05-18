@@ -1,0 +1,15 @@
+{
+  "model": "openai-community/gpt2",
+  "layer": 6,
+  "n_sequences": 512,
+  "d_model": 768,
+  "total_rms": 3040.58984375,
+  "constant_norm": 3040.514404296875,
+  "variable_rms": 33.858680725097656,
+  "constant_fraction_of_energy": 0.9998760084520864,
+  "pairwise_cos_mean": 0.9999499917030334,
+  "pairwise_cos_std": 1.4143925909593236e-05,
+  "pca_explained_top1": 0.6432959342811067,
+  "pca_explained_top10": 0.7886026499039562,
+  "pca_explained_top100": 0.956411922708035
+}
