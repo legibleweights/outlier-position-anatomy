@@ -1,6 +1,6 @@
 # Anatomy of the position-0 "attention sink" in small open transformers
 
-**Date:** 2026-05-19 (v0.2 — register content analysis added)
+**Date:** 2026-05-19 (v0.3 — register direction analysis added)
 
 ## Question
 
@@ -37,6 +37,14 @@ We answer all three with concrete numbers.
   is in the input-independent mean vector). It is not encoding any
   property of the input — it is a fixed *scaffolding vector* that the
   model uses as an attention-sink anchor.
+- **The direction of that fixed vector varies by model.** In Qwen2.5-0.5B
+  it's essentially a null direction (top token-embedding cosine 0.15,
+  same as a random Gaussian baseline). In GPT-2 small the register is
+  anti-aligned with rare control-character tokens (cosine −0.29 vs
+  baseline 0.15). In Pythia-1.4B it's strongly anti-aligned with
+  whitespace tokens (unembedding cosine −0.44 vs baseline 0.09). Could
+  be functional (learned suppression) or geometric (orthogonal to the
+  unembedding bulk); not distinguishable from this experiment alone.
 
 ## Methodology
 
@@ -138,6 +146,61 @@ The exact layer indices differ — GPT-2's main writer is L2 (out of 12),
 Pythia's is L3 (out of 24), Qwen's is L2/L3 (out of 24). Normalized by
 network depth, all are very early (positions 16–25% into the network).
 The eraser is consistently in the final 5–10% of layers.
+
+### v0.3 — what direction does the register point in?
+
+v0.2 told us the register is essentially constant. The next obvious
+question: **what direction is that constant vector?** Three candidates:
+
+1. The embedding of a specific token (e.g., BOS, EOS, a space, or a
+   newline) — in which case the model is essentially "writing the
+   embedding of token X at position 0".
+2. The anti-direction of some specific token class — in which case the
+   register acts as a structural suppressor for those predictions.
+3. A learned null direction — uncorrelated with any specific token,
+   chosen during training as an arbitrary "place to dump attention."
+
+**Methodology** (`05_register_direction.py`): take the mean register
+vector from v0.2, compute its cosine with every row of the input
+embedding matrix and every row of the lm_head unembedding matrix. Report
+top-K aligned (or anti-aligned) tokens. Compare against a random Gaussian
+baseline of the same dimensionality.
+
+**Results:**
+
+| model              | top embed cosine | top unembed cosine | random baseline top cos | semantic content |
+|--------------------|------------------|--------------------|-------------------------|----------------------------------------|
+| **Qwen2.5-0.5B**   | 0.13–0.15        | 0.13–0.15          | 0.15                    | **null direction** — indistinguishable from random |
+| **GPT-2 small**    | **−0.29**        | **−0.29**          | 0.15                    | anti-aligned with control chars (`\x06`, `\x1a`, `\x04`, …) and rare tokens |
+| **Pythia-1.4B**    | 0.09             | **−0.44**          | 0.09                    | strongly anti-aligned with whitespace / repeated-space tokens |
+
+Three different stories. **In Qwen the register direction is essentially
+null** — it doesn't align with any specific token more than a random
+direction would. **In GPT-2 and Pythia it's clearly directional** — the
+register direction is anti-aligned with a specific class of tokens (2×
+and ~5× the random-baseline magnitude respectively).
+
+**Important interpretive caveat I cannot resolve from this data alone:**
+the anti-alignment with whitespace in Pythia could be either:
+
+- **Functional**: the model has learned to use the register at position 0
+  as a mechanism to *suppress whitespace predictions* (e.g., to avoid
+  starting outputs with extra spaces).
+- **Geometric**: whitespace tokens are extremely common in The Pile
+  (Pythia's training corpus); their unembedding rows form a dominant
+  direction in unembedding space; the "null direction" the model picks
+  for the attention sink is naturally orthogonal-or-anti-orthogonal to
+  the dominant bulk, which is whitespace.
+
+Both hypotheses are consistent with the observation. Distinguishing them
+needs a follow-up experiment: e.g., re-train Pythia with whitespace tokens
+re-weighted, or measure whether the register's anti-alignment is preserved
+under fine-tuning on non-whitespace-heavy data.
+
+**Tentative aggregate claim**: the register direction varies by model —
+in some it's near-null, in others it's a learned (or emergent)
+anti-direction against frequent / "background" tokens. It is not a
+BOS-or-other-named-token signature in any of the three.
 
 ### v0.2 — what does the register store?
 

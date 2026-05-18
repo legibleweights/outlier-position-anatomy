@@ -1,0 +1,139 @@
+{
+  "model": "openai-community/gpt2",
+  "layer": 6,
+  "mean_register_norm": 3042.46142578125,
+  "d_model": 768,
+  "vocab_size": 50257,
+  "tied_embedding": true,
+  "top_aligned_input_embeddings": [
+    {
+      "token_id": 30208,
+      "token_str": " externalTo",
+      "cosine": -0.2905943989753723,
+      "dot": -2725.16943359375
+    },
+    {
+      "token_id": 194,
+      "token_str": "\u0006",
+      "cosine": -0.2904646396636963,
+      "dot": -2733.18701171875
+    },
+    {
+      "token_id": 214,
+      "token_str": "\u001a",
+      "cosine": -0.2902108430862427,
+      "dot": -2732.18310546875
+    },
+    {
+      "token_id": 192,
+      "token_str": "\u0004",
+      "cosine": -0.2895497679710388,
+      "dot": -2720.80908203125
+    },
+    {
+      "token_id": 36173,
+      "token_str": " RandomRedditor",
+      "cosine": -0.2894342839717865,
+      "dot": -2723.94189453125
+    },
+    {
+      "token_id": 218,
+      "token_str": "\u001e",
+      "cosine": -0.28912922739982605,
+      "dot": -2716.923828125
+    },
+    {
+      "token_id": 208,
+      "token_str": "\u0014",
+      "cosine": -0.289039671421051,
+      "dot": -2717.51220703125
+    },
+    {
+      "token_id": 196,
+      "token_str": "\b",
+      "cosine": -0.28900763392448425,
+      "dot": -2718.034912109375
+    },
+    {
+      "token_id": 202,
+      "token_str": "\u000e",
+      "cosine": -0.2888810336589813,
+      "dot": -2716.677001953125
+    },
+    {
+      "token_id": 180,
+      "token_str": "\ufffd",
+      "cosine": -0.28885143995285034,
+      "dot": -2721.017578125
+    }
+  ],
+  "top_aligned_unembeddings": [
+    {
+      "token_id": 30208,
+      "token_str": " externalTo",
+      "cosine": -0.2905943989753723,
+      "dot": -2725.16943359375
+    },
+    {
+      "token_id": 194,
+      "token_str": "\u0006",
+      "cosine": -0.2904646396636963,
+      "dot": -2733.18701171875
+    },
+    {
+      "token_id": 214,
+      "token_str": "\u001a",
+      "cosine": -0.2902108430862427,
+      "dot": -2732.18310546875
+    },
+    {
+      "token_id": 192,
+      "token_str": "\u0004",
+      "cosine": -0.2895497679710388,
+      "dot": -2720.80908203125
+    },
+    {
+      "token_id": 36173,
+      "token_str": " RandomRedditor",
+      "cosine": -0.2894342839717865,
+      "dot": -2723.94189453125
+    },
+    {
+      "token_id": 218,
+      "token_str": "\u001e",
+      "cosine": -0.28912922739982605,
+      "dot": -2716.923828125
+    },
+    {
+      "token_id": 208,
+      "token_str": "\u0014",
+      "cosine": -0.289039671421051,
+      "dot": -2717.51220703125
+    },
+    {
+      "token_id": 196,
+      "token_str": "\b",
+      "cosine": -0.28900763392448425,
+      "dot": -2718.034912109375
+    },
+    {
+      "token_id": 202,
+      "token_str": "\u000e",
+      "cosine": -0.2888810336589813,
+      "dot": -2716.677001953125
+    },
+    {
+      "token_id": 180,
+      "token_str": "\ufffd",
+      "cosine": -0.28885143995285034,
+      "dot": -2721.017578125
+    }
+  ],
+  "random_baseline_top_cos": [
+    -0.1479557454586029,
+    -0.14022284746170044,
+    -0.13420961797237396,
+    -0.13025738298892975,
+    -0.12995125353336334
+  ]
+}
