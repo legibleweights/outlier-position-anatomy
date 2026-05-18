@@ -1,6 +1,6 @@
 # Anatomy of the position-0 "attention sink" in small open transformers
 
-**Date:** 2026-05-19 (v0.4 — register vs unembedding PCA added)
+**Date:** 2026-05-19 (v0.5 — head-level dissection extended to all three models)
 
 ## Question
 
@@ -151,6 +151,55 @@ The exact layer indices differ — GPT-2's main writer is L2 (out of 12),
 Pythia's is L3 (out of 24), Qwen's is L2/L3 (out of 24). Normalized by
 network depth, all are very early (positions 16–25% into the network).
 The eraser is consistently in the final 5–10% of layers.
+
+### v0.5 — cross-model head-level dissection
+
+v0.1 did per-head ablation only on Qwen2.5-0.5B; for the other two models
+the cross-model story was layer-level only. v0.5 replicates the per-head
++ per-MLP ablation (`02b_head_attribution_multimodel.py`, with
+architecture dispatch for `model.transformer.h[i]` / `model.gpt_neox.layers[i]`
+in addition to `model.model.layers[i]`) on GPT-2 small and Pythia-1.4B.
+
+**Writer-layer attribution (drop in pos-0 RMS when one component is zeroed):**
+
+| model              | writer layer | top head ablation effect | MLP ablation effect |
+|--------------------|-------------:|--------------------------|---------------------|
+| **Qwen2.5-0.5B**   | L2           | **head 5: −93.5%**       | −98.6%              |
+| **Qwen2.5-0.5B**   | L3           | <0.1% (any head)         | −54.2%              |
+| **GPT-2 small**    | L1           | head 10: −5.8% (best)    | **−74.3%**          |
+| **GPT-2 small**    | L2           | <0.3% (any head)         | **−75.5%**          |
+| **Pythia-1.4B**    | L3           | <0.5% (any head)         | **−91.1%**          |
+| **Pythia-1.4B**    | L4           | <0.3% (any head)         | −22.4%              |
+
+**Universal finding for writers**: in all three models the writing is
+done overwhelmingly by **MLPs, not attention heads.** Qwen's L2 head 5 at
+93.5 % is the only attention-head writer at scale; GPT-2 and Pythia have
+no single head explaining more than ~5 % of any writer layer's
+contribution. The MLPs at the writer layers explain 22–91 % of the
+position-0 contribution by themselves.
+
+**Eraser-layer attribution:**
+
+| model              | eraser layer | top head ablation effect | MLP ablation effect |
+|--------------------|-------------:|--------------------------|---------------------|
+| **Qwen2.5-0.5B**   | L21          | <3.5% (any head)         | **MLP (sole)** — ablation undoes the erase entirely |
+| **GPT-2 small**    | L11          | **head 8: 77 %** + head 11: 29 % | only 4.4 % |
+| **Pythia-1.4B**    | L23          | head 9: 7 % (best)       | **−56.9 %**         |
+
+**The erase mechanism is NOT universal.** Qwen and Pythia use
+MLP-mediated erasers — single specific MLPs at the second-to-last
+(Qwen) or final (Pythia) layer that explain most of the cancellation.
+GPT-2 uses an **attention-head-mediated eraser**: a single attention
+head (L11 head 8) accounts for 77 % of the erase, with the MLP
+contributing almost nothing.
+
+**Refined cross-model claim**: the **write-and-erase topology** (write
+in the first 4 layers, carry through middle, erase in the last 1–2
+layers) is universal across small open transformers. The **specific
+implementation of the writer** is universal: MLPs dominate. The
+**specific implementation of the eraser** varies: MLPs in Qwen/Pythia,
+attention heads in GPT-2. We now have named components for the eraser
+in each model (Qwen L21 MLP, GPT-2 L11 head 8, Pythia L23 MLP).
 
 ### v0.4 — geometric vs functional: is the register the anti-direction of the unembedding bulk?
 
