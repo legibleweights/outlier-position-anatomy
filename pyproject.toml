@@ -1,0 +1,18 @@
+[project]
+name = "outlier-position-anatomy"
+version = "0.1.0"
+description = "Mechanistic dissection of the position-0 attention sink in small open transformers."
+readme = "README.md"
+license = { text = "MIT" }
+requires-python = ">=3.10"
+dependencies = [
+    "torch>=2.3",
+    "transformers>=4.40",
+    "datasets>=2.19",
+    "tqdm>=4.66",
+    "safetensors>=0.4",
+]
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
