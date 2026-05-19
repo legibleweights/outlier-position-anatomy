@@ -1,6 +1,6 @@
 # Anatomy of the position-0 "attention sink" in small open transformers
 
-**Date:** 2026-05-19 (v0.6 — downstream application via Register-Subtracted SAE)
+**Date:** 2026-05-19 (v0.7 — mechanistic finding predicts the architectural result)
 
 ## Question
 
@@ -184,6 +184,42 @@ that mechanistic understanding fed directly into an architectural
 improvement on the SAE side. The bridge — "the register is a fixed
 constant, so subtract it offline" — was not obvious without the v0.2
 constancy finding here.
+
+### v0.7 — the mechanistic finding *predicts* where the architectural improvement works
+
+After v0.6, the sister project ran the Register-Subtracted SAE on 8
+(model, layer) configurations and found 6 wins, 1 tie, 1 regression.
+The single regression was at GPT-2 small L10, just before GPT-2's L11
+eraser. The other "one-before-eraser" datapoints were Qwen L20 (before
+L21 eraser) and Pythia L22 (before L23 eraser), both of which gave
+positive RS gain.
+
+**This is exactly the v0.5 eraser-mechanism distinction operating
+predictively.** v0.5 found that Qwen and Pythia use *MLP-mediated*
+erasers, while GPT-2 uses an *attention-head-mediated* eraser
+(specifically L11 head 8 doing 77 % of GPT-2's erase). The
+register-subtracted architecture pays a small mid-sequence
+reconstruction cost everywhere; when that cost gets routed through a
+downstream eraser:
+
+- **MLP eraser** (Qwen, Pythia): per-position operation, tolerates small
+  per-position errors → CE-recovery gain
+- **Attention-head eraser** (GPT-2): cross-position attention, amplifies
+  per-position errors across positions → CE-recovery regression
+
+So the v0.5 finding "GPT-2's eraser is attention-head-mediated" — which
+seemed like a curiosity at the time — turns out to *predict* exactly
+which configuration of the Register-Subtracted SAE will regress.
+
+In a clean paper narrative: this project (outlier-position-anatomy)
+characterized small open transformers' position-0 register at multiple
+levels of detail (where, what's in it, what direction, which
+components, which mechanism); the sister project (small-sae-bench)
+turned each level of detail into an architectural improvement; the
+*deepest* mechanistic finding (eraser mechanism type at the head/MLP
+level) became the predictive rule for *when* that architectural
+improvement helps. Mechanistic interpretability → architectural
+contribution → predictive theory in one loop.
 
 ### v0.5 — cross-model head-level dissection
 
