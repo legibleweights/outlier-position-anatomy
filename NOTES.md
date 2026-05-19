@@ -1,6 +1,6 @@
 # Anatomy of the position-0 "attention sink" in small open transformers
 
-**Date:** 2026-05-19 (v0.5 — head-level dissection extended to all three models)
+**Date:** 2026-05-19 (v0.6 — downstream application via Register-Subtracted SAE)
 
 ## Question
 
@@ -151,6 +151,39 @@ The exact layer indices differ — GPT-2's main writer is L2 (out of 12),
 Pythia's is L3 (out of 24), Qwen's is L2/L3 (out of 24). Normalized by
 network depth, all are very early (positions 16–25% into the network).
 The eraser is consistently in the final 5–10% of layers.
+
+### v0.6 — downstream application: Register-Subtracted SAE
+
+The v0.2 finding (the register is essentially a constant vector that we
+can compute offline from ~256 forward passes) directly motivates an
+architectural improvement on the SAE side. If the register is constant,
+we can subtract it directly in a TopK SAE at position 0 without needing
+any learnable per-position bias. The sister project
+[small-sae-bench](https://github.com/legibleweights/small-sae-bench) v0.4
+implements this and reports a clean result across 3 models × 5
+(model, layer) configurations:
+
+| model · layer       | TopK EV pos 0-3      | RS EV pos 0-3 | RS CE-recovery gain vs TopK |
+|---------------------|----------------------|---------------|-----------------------------|
+| Qwen2.5-0.5B L5     | −0.05                | 0.9999        | +0.3 pts                    |
+| Qwen2.5-0.5B L9     | −0.06                | 0.9999        | +0.9 pts                    |
+| Qwen2.5-0.5B L15    | **−0.47**            | 0.9997        | **+2.4 pts**                |
+| GPT-2 small L6      | 0.08                 | 0.9997        | +1.5 pts                    |
+| Pythia-1.4B L12     | **0.935** (not broken) | 0.998         | tied                        |
+
+Register-Subtracted TopK is a strict Pareto-improvement over vanilla
+TopK across all five configurations, with the size of its CE-recovery
+gain proportional to TopK's prefix-failure severity. Pythia L12 is the
+exception — TopK is *not* broken there because Pythia's eraser is at
+the final layer (L23), so L12 (mid-network) has a smaller-magnitude
+register than Qwen's mid-network layers.
+
+**This closes a research-arc loop**: this project (outlier-position-
+anatomy) characterized the position-0 phenomenon mechanistically, and
+that mechanistic understanding fed directly into an architectural
+improvement on the SAE side. The bridge — "the register is a fixed
+constant, so subtract it offline" — was not obvious without the v0.2
+constancy finding here.
 
 ### v0.5 — cross-model head-level dissection
 
